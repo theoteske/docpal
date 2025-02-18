@@ -4,6 +4,11 @@ import streamlit as st
 from src.config import ACCEPTED_FILE_TYPES
 
 def upload_and_handle_file():
+    """Handle file upload interface and processing in Streamlit.
+
+    Displays file upload widget and processes uploaded file, storing it
+    in temporary directory and updating session state with file information.
+    """
     st.title("DocPal - Talk to a Document")
     uploaded_file = st.file_uploader(
         label=(

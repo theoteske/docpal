@@ -3,6 +3,7 @@ from ui.file_upload import upload_and_handle_file
 from ui.chat_interface import chat_interface
 
 def main():
+    """Runs the app and manages session state."""
     if 'page' not in st.session_state:
         st.session_state['page'] = 1
 

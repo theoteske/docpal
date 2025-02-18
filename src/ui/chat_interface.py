@@ -3,6 +3,11 @@ import streamlit as st
 from src.chat_service import ChatWithFile
 
 def chat_interface():
+    """Display and manage the chat interface in Streamlit.
+
+    Handles chat instance initialization, user input, and displays
+    conversation history and responses.
+    """
     st.title('DocPal - Talk to a Document')
     file_path = st.session_state.get('file_path')
     file_type = st.session_state.get('file_type')
