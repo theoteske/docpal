@@ -5,6 +5,14 @@ from InstructorEmbedding import INSTRUCTOR
 
 @st.cache_resource
 def load_model():
+    """Load and initialize the embedding model with appropriate device settings.
+
+    Returns:
+        HuggingFaceInstructEmbeddings: Initialized embedding model.
+
+    Raises:
+        Exception: If model loading fails, displays error in Streamlit UI and stops execution.
+    """
     if torch.cuda.is_available():
         device = 'cuda'
     else:

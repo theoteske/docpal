@@ -63,7 +63,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Download and set up Ollama:
+4. Download and set up Ollama locally:
 - Follow instructions at [Ollama's official website](https://ollama.ai/)
 - Pull the llama3 model:
 ```bash
