@@ -11,12 +11,32 @@ from embeddings import load_model
 from config import FILE_LOADERS, logger
 
 class ChatWithFile:
-    def __init__(self, file_path, file_type):
+    """Manages chat interactions with documents using LLM and vector storage.
+
+    This class handles document processing, embedding, storage, and maintains
+    conversation history.
+
+    Attributes:
+        embedding_model: Model used for text embeddings.
+        vectordb: Vector database for storing document embeddings.
+        memory: Buffer for maintaining chat history.
+        llm: Language model instance.
+        qa: Conversational retrieval chain.
+        conversation_history: List of chat messages.
+    """
+    def __init__(self, file_path: str, file_type: str):
+        """Initialize chat service."""
         self.embedding_model = load_model()
         self.vectordb = None
         self.initialize_chat(file_path, file_type)
 
-    def initialize_chat(self, file_path, file_type):
+    def initialize_chat(self, file_path: str, file_type: str):
+        """Set up chat components including document processing and LLM chain.
+
+        Args:
+            file_path: Path to the uploaded document.
+            file_type: Extension of the uploaded file.
+        """
         loader = FILE_LOADERS[file_type](file_path=file_path)
         pages = loader.load_and_split()
         docs = self.split_into_chunks(pages)
@@ -37,7 +57,15 @@ class ChatWithFile:
 
         self.conversation_history = []
 
-    def split_into_chunks(self, pages):
+    def split_into_chunks(self, pages: list) -> list:
+        """Split document pages into semantic chunks for processing.
+
+        Args:
+            pages: List of document pages to be split.
+
+        Returns:
+            List of semantic chunks ready for embedding.
+        """
         text_splitter = SemanticChunker(
             embeddings=self.embedding_model,
             breakpoint_threshold_type="percentile"
@@ -45,6 +73,14 @@ class ChatWithFile:
         return text_splitter.split_documents(pages)
 
     def simplify_metadata(self, doc):
+        """Convert complex metadata values to strings for storage.
+
+        Args:
+            doc: Document with metadata to be simplified.
+
+        Returns:
+            Document with simplified metadata.
+        """
         metadata = getattr(doc, "metadata", None)
         if isinstance(metadata, dict):
             for key, value in metadata.items():
@@ -52,12 +88,25 @@ class ChatWithFile:
                     metadata[key] = str(value)
         return doc
 
-    def store_in_chroma(self, docs):
+    def store_in_chroma(self, docs: list):
+        """Store document chunks in Chroma vector database.
+
+        Args:
+            docs: List of document chunks to be stored.
+        """
         docs = [self.simplify_metadata(doc) for doc in docs]
         self.vectordb = Chroma.from_documents(docs, embedding=self.embedding_model)
         self.vectordb.persist()
 
-    def reciprocal_rank_fusion(self, all_results):
+    def reciprocal_rank_fusion(self, all_results: list) -> list:
+        """Combine and rank query results using reciprocal rank fusion.
+
+        Args:
+            all_results: List of query results to be ranked.
+
+        Returns:
+            List of results sorted by fusion score.
+        """
         fused_scores = {}
         for result in all_results:
             doc_id = result["query"]
@@ -68,7 +117,16 @@ class ChatWithFile:
         reranked_results = sorted(fused_scores.values(), key=lambda x: x["score"], reverse=True)
         return reranked_results
 
-    def create_synthesis_prompt(self, original_question, all_results):
+    def create_synthesis_prompt(self, original_question: str, all_results: list) -> str:
+        """Create a prompt for synthesizing multiple search results.
+
+        Args:
+            original_question: The user's initial question.
+            all_results: Ranked list of search results.
+
+        Returns:
+            Formatted prompt string for synthesis.
+        """
         sorted_results = sorted(all_results, key=lambda x: x["score"], reverse=True)
         prompt = (
             f"Based on the user's original question: '{original_question}', "
@@ -91,7 +149,15 @@ class ChatWithFile:
 
         return prompt
 
-    def extract_json_from_response(self, response_text):
+    def extract_json_from_response(self, response_text: str) -> tuple:
+        """Extract JSON array from LLM response text.
+
+        Args:
+            response_text: Raw text response from LLM.
+
+        Returns:
+            Tuple containing parsed JSON data or empty tuple if parsing fails.
+        """
         json_result = ()
         try:
             json_start = response_text.find('[')
@@ -102,7 +168,15 @@ class ChatWithFile:
             logger.error("Failed to parse JSON: %s", e)
         return json_result
 
-    def generate_related_queries(self, original_query):
+    def generate_related_queries(self, original_query: str) -> tuple:
+        """Generate related search queries based on original question.
+
+        Args:
+            original_query: User's initial question.
+
+        Returns:
+            Tuple of related queries or empty tuple if generation fails.
+        """
         prompt = (
             f"In light of the original inquiry: '{original_query}', let's "
             "delve deeper and broaden our exploration. Please construct a "
@@ -128,7 +202,15 @@ class ChatWithFile:
         related_queries = self.extract_json_from_response(generated_text)
         return related_queries
 
-    def chat(self, question):
+    def chat(self, question: str) -> dict:
+        """Process user question and generate comprehensive response.
+
+        Args:
+            question: User's question about the document.
+
+        Returns:
+            Dict containing answer and any additional response information.
+        """
         related_queries_dicts = self.generate_related_queries(question)
         related_queries_list = [q["query"] for q in related_queries_dicts]
         queries = [question] + related_queries_list
