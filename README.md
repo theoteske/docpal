@@ -4,7 +4,7 @@ DocPal is a Streamlit-based application that enables interactive conversations w
 
 ## Features
 
-- **Multiple Document Format Support**: Process PDF, DOCX, TXT, CSV, PPTX, and XLSX files
+- **Multiple Document Format Support**: Process CSV, PDF, DOCX, PPTX, TXT, and XLSX files
 - **Semantic Search**: Utilizes advanced embedding models for context-aware document comprehension
 - **Interactive Chat Interface**: Natural conversation flow with document context
 - **Multi-Query Synthesis**: Generates multiple related queries to each user query and synthesizes their content for comprehensive answers
